@@ -26,38 +26,50 @@ class DefaultEventListener(EventListener):
 
         
         self.unreplied_person = [] #等待回复的私聊
+        printf("初始化完成")
 
-        @self.handler(events.PersonNormalMessageReceived)
+        @self.handler(events.PersonMessageReceived)
         async def handler(event_context:context.EventContext):
 
             sender_id = event_context.event.sender_id
             message_chain = event_context.event.message_chain
 
+
             plain =" ".join(
                 element.text for element in message_chain
-                if isinstance(element,platform_message.Plain) and element.text == "bot" 
+                if isinstance(element,platform_message.Plain)
                 ).strip()
             has_any = bool(re.search(r'bot|ai',plain))
             has_only = bool(re.fullmatch(r'bot|ai', plain))
 
+            printf(plain)
+
             # 正则匹配成功后回复
             if has_any:
+                printf("正则匹配成功")
                 # 触发回复，但内容为空，等待回复
                 if has_only:
                     event_context.prevent_default()
-                    if not sender in self.unreplied_person: 
+                    printf("正则匹配成功,等待回复")
+                    if not sender_id in self.unreplied_person: 
                         self.unreplied_person.append(sender_id)
                 # 正常回复逻辑
                 else :
+                    printf("正则匹配成功,回复")
                     return
             
             # 正则匹配失败
             else:
                 # 尝试回应未完成的请求
-                for sender in self.unreplied_person:
-                    if sender_id == sender:
+                for person in self.unreplied_person:
+                    if sender_id == person:
                         self.unreplied_person.remove(sender_id)
+                        printf("未完成的请求,回复")
                         return
                 event_context.prevent_default()
+                printf("正则匹配失败")
             
+            return
+        def printf(str:str):
+            print("插件信息:"+str)
             return
